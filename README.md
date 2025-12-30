@@ -39,12 +39,12 @@ Window → Game Dashboard →  Game Dashboard
 
 Game Dashboard provides optional compatibility with the following packages:
 
-### ✔ EditorAttributes
+### ✔ [EditorAttributes](https://github.com/v0lt13/EditorAttributes)
 - Automatically detects and supports EditorAttributes if present
 - Enhances data visualization and editor UI
 - No hard dependency required
 
-### ✔ unity-toolbar-extender
+### ✔ [unity-toolbar-extender](https://github.com/marijnz/unity-toolbar-extender)
 - Used for toolbar integration on older Unity versions
 - Supported **up to Unity 6000.2 inclusive**
 - Automatically disabled on newer Unity versions
