@@ -1,0 +1,12 @@
+{
+  "name": "com.arthurlc.game-dashboard",
+  "displayName": "Game Dashboard",
+  "version": "1.0.0",
+  "description": "Game Dashboard is a Unity editor tool that centralizes your project\u2019s key settings and data into a single dashboard window.",
+  "author": {
+    "name": "ArthurLc",
+    "email": "arthur.lacour-travail@laposte.net"
+  },
+  "licensesUrl": "https://github.com/ArthurLc/unity-game-dashboard?tab=MIT-1-ov-file",
+  "unity": "2022.1"
+}

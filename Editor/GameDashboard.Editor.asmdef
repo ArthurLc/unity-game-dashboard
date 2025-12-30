@@ -1,0 +1,30 @@
+{
+    "name": "GameDashboard.Editor",
+    "rootNamespace": "GameDashboard.Editor",
+    "references": [
+        "GUID:0a0471484b079be408cb3a0d7fe94736",
+        "GUID:a42c64b2b45190347903076a017fce90"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.marijnzwemmer.unity-toolbar-extender",
+            "expression": "1.4.2",
+            "define": "TOOLBAREXTENDER_1_4_2"
+        },
+        {
+            "name": "com.v0lt.editor-attributes",
+            "expression": "2.6.0",
+            "define": "EDITORATTRIBUTES_2_6_0"
+        }
+    ],
+    "noEngineReferences": false
+}

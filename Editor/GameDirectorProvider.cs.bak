@@ -1,0 +1,359 @@
+﻿using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEditor;
+using UnityEditor.UIElements;
+
+namespace GameDashboard.Editor
+{
+    static class GameDashboardProvider
+    {
+        [SettingsProvider]
+        public static SettingsProvider CustomSettingsProvider()
+        {
+            var provider = new SettingsProvider("4rtisans/Game Dashboard", SettingsScope.Project)
+            {
+                label = "Game Dashboard",
+                activateHandler = (searchContext, rootElement) =>
+                {
+                    var settings = GameDashboardSettings.GetOrCreateSettings();
+
+                    var title = new Label()
+                    {
+                        text = "Game Dashboard",
+                        style =
+                        {
+                            unityFontStyleAndWeight = FontStyle.Bold,
+                            fontSize = 19,
+                            marginLeft = 9,
+                            marginTop = 2,
+                            marginBottom = 2
+                        }
+                    };
+                    rootElement.Add(title);
+
+                    var container = new GroupBox("Assets Tree");
+                    container.style.flexDirection = FlexDirection.Column;
+
+                    ListView listView = new ListView();
+                    {
+                        listView.itemsSource = settings.TreeAssetsList;
+                        listView.selectionType = SelectionType.Single;
+                        listView.reorderable = true;
+                        listView.reorderMode = ListViewReorderMode.Simple; ///TODO: Switch to "Animated" when Unity has fixed the bug with the idx drag.
+                        listView.showBorder = true;
+                        listView.showAddRemoveFooter = true;
+                        listView.allowAdd = true;
+                        listView.allowRemove = true;
+                        listView.style.flexGrow = 1;
+                        listView.fixedItemHeight = 22;
+                    }
+
+                    listView.makeItem = () =>
+                    {
+                        var row = new VisualElement { style = { flexDirection = FlexDirection.Row } };
+
+                        var keyField = new ObjectField
+                        {
+                            objectType = typeof(Object),
+                            allowSceneObjects = false,
+                            name = "keyField",
+                            label = "",
+                            style = { width = 200 }
+                        };
+                        row.Add(keyField);
+
+                        var iconField = new VisualElement
+                        {
+                            name = "iconField",
+                            style =
+                            {
+                                width = 22,
+                                marginLeft = 5
+                            }
+                        };
+                        row.Add(iconField);
+
+                        var dropdownField = new DropdownField
+                        {
+                            name = "dropdownField",
+                            choices = validIcons,
+                            tooltip = "Select an icon from this shortlist.",
+                            style = { width = 100 }
+                        };
+                        row.Add(dropdownField);
+
+                        var valueField = new TextField
+                        {
+                            name = "valueField",
+                            label = "",
+                            tooltip = "Icon name.",
+                            style = { flexGrow = 1 }
+                        };
+                        row.Add(valueField);
+
+                        var buttonField = new Button(EditorGUIUtility.IconContent("Custom").image as Texture2D)
+                        {
+                            name = "buttonField",
+                            tooltip = "Edit the icon name string."
+                        };
+                        row.Add(buttonField);
+
+                        return row;
+                    };
+
+                    listView.itemIndexChanged += (from, to) =>
+                    {
+                        EditorApplication.delayCall += () =>
+                        {
+                            settings.SaveSettings();
+                        };
+                    };
+                    listView.itemsAdded += (idx) =>
+                    {
+                        EditorApplication.delayCall += () =>
+                        {
+                            settings.SaveSettings();
+                        };
+                    };
+                    listView.itemsRemoved += (idx) =>
+                    {
+                        EditorApplication.delayCall += () =>
+                        {
+                            settings.SaveSettings();
+                        };
+                    };
+
+                    listView.bindItem = (element, i) =>
+                    {
+                        var entry = settings.TreeAssetsList[i];
+                        var keyField = element.Q<ObjectField>("keyField");
+                        var iconField = element.Q<VisualElement>("iconField");
+                        var valueField = element.Q<TextField>("valueField");
+                        var dropdownField = element.Q<DropdownField>("dropdownField");
+                        var buttonField = element.Q<Button>("buttonField");
+
+                        bool isKeyFolder = DoesKeyFolder(entry.keyObject);
+                        bool valueReadOnly = true;
+
+                        keyField.value = entry.keyObject;
+                        RefreshIcon(iconField, entry.keyObject, entry.value, isKeyFolder);
+                        valueField.value = entry.value;
+                        valueField.visible = entry.keyObject && !isKeyFolder;
+                        valueField.SetEnabled(!valueReadOnly);
+                        dropdownField.value = entry.value;
+                        dropdownField.visible = entry.keyObject && !isKeyFolder;
+                        buttonField.visible = entry.keyObject && !isKeyFolder;
+
+                        keyField.RegisterValueChangedCallback(evt =>
+                        {
+                            if (i < settings.TreeAssetsList.Count)
+                            {
+                                entry.keyObject = evt.newValue;
+                                settings.TreeAssetsList[i] = entry;
+                                settings.cachedTreeAssets = null;
+
+                                isKeyFolder = DoesKeyFolder(entry.keyObject);
+
+                                RefreshIcon(iconField, entry.keyObject, entry.value, isKeyFolder);
+                                valueField.visible = entry.keyObject && !isKeyFolder;
+                                dropdownField.visible = entry.keyObject && !isKeyFolder;
+                                buttonField.visible = entry.keyObject && !isKeyFolder;
+
+                                settings.SaveSettings();
+                            }
+                        });
+                        valueField.RegisterValueChangedCallback(evt =>
+                        {
+                            if (i < settings.TreeAssetsList.Count)
+                            {
+                                entry.value = evt.newValue;
+                                settings.TreeAssetsList[i] = entry;
+                                settings.cachedTreeAssets = null;
+
+                                RefreshIcon(iconField, entry.keyObject, entry.value, isKeyFolder);
+                                dropdownField.value = entry.value;
+
+                                settings.SaveSettings();
+                            }
+                        });
+                        dropdownField.RegisterValueChangedCallback(evt =>
+                        {
+                            if (i < settings.TreeAssetsList.Count)
+                            {
+                                entry.value = evt.newValue;
+                                settings.TreeAssetsList[i] = entry;
+                                settings.cachedTreeAssets = null;
+
+                                RefreshIcon(iconField, entry.keyObject, entry.value, isKeyFolder);
+                                valueField.value = entry.value;
+
+                                settings.SaveSettings();
+                            }
+                        });
+                        buttonField.clicked += () =>
+                        {
+                            valueReadOnly = !valueReadOnly;
+                            valueField.SetEnabled(!valueReadOnly);
+
+                            buttonField.iconImage = valueReadOnly ? EditorGUIUtility.IconContent("Custom").image as Texture2D :
+                                                                    EditorGUIUtility.IconContent("Valid").image as Texture2D;
+                        };
+                    };
+
+                    container.Add(listView);
+
+                    rootElement.Add(container);
+
+                    rootElement.Add(new HelpBox("Only <a href=\"https://github.com/ErnSur/unity-editor-icons\">Unity built-in icon</a> names are supported (e.g. d_Folder Icon, d_Text Icon, etc.).\n" +
+                    "An invalid name will fall back to the default icon and may log a warning once.",
+                    HelpBoxMessageType.Info));
+                },
+
+                keywords = new HashSet<string>(new[] { "Game", "Dashboard", "Overview", "Settings", "Project", "Manager", "Organize" })
+            };
+
+            return provider;
+        }
+
+
+        private static bool DoesKeyFolder(Object keyObject)
+        {
+            return keyObject != null &&
+                !string.IsNullOrEmpty(AssetDatabase.GetAssetPath(keyObject)) &&
+                AssetDatabase.IsValidFolder(AssetDatabase.GetAssetPath(keyObject));
+        }
+
+        private static void RefreshIcon(in VisualElement icon, Object key, string value, bool forceFolderIcon)
+        {
+            icon.visible = (key != null);
+
+            if (forceFolderIcon)
+            {
+                icon.style.backgroundImage = EditorGUIUtility.IconContent("Folder Icon").image as Texture2D;
+            }
+            else if (string.IsNullOrEmpty(value))
+            {
+                icon.style.backgroundImage = null;
+            }
+            else
+            {
+                var guiIcon = EditorGUIUtility.IconContent(value);
+                if (guiIcon != null && guiIcon.image != null)
+                {
+                    icon.style.backgroundImage = guiIcon.image as Texture2D;
+                }
+                else
+                {
+                    icon.style.backgroundImage = EditorGUIUtility.IconContent("BuildSettings.Broadcom").image as Texture2D;
+                }
+            }
+        }
+
+        #region Icons
+        private static readonly List<string> validIcons = new List<string>()
+        {
+            "2d-badge-scene-template",
+            "3d-badge-scene-template",
+            "AnalyticsTracker Icon",
+            "AnimatorController Icon",
+            "AreaLight Gizmo",
+            "AspectRatioFitter Icon",
+            "AudioClip Icon",
+            "AudioMixerGroup Icon",
+            "AudioRandomContainer Icon",
+            "AudioSource Gizmo",
+            "Avatar Icon",
+            "AvatarPivot",
+            "boo Script Icon",
+            "BuildSettings.Android",
+            "BuildSettings.DedicatedServer",
+            "BuildSettings.EmbeddedLinux",
+            "BuildSettings.FlashPlayer",
+            "BuildSettings.iPhone",
+            "BuildSettings.Metro",
+            "BuildSettings.N3DS",
+            "BuildSettings.PS4",
+            "BuildSettings.PS5",
+            "BuildSettings.PSM",
+            "BuildSettings.PSP2",
+            "BuildSettings.SelectedIcon",
+            "BuildSettings.Stadia",
+            "BuildSettings.Standalone",
+            "BuildSettings.Switch",
+            "BuildSettings.Web",
+            "BuildSettings.WebGL",
+            "BuildSettings.WP8",
+            "BuildSettings.XBox360",
+            "BuildSettings.XboxOne",
+            "Camera Icon",
+            "Clipboard",
+            "ColorPicker.CycleColor",
+            "ColorPicker.CycleSlider",
+            "console.infoicon",
+            "CrossIcon",
+            "cs Script Icon",
+            "Customized",
+            "editicon.sml",
+            "EyeDropper.Large",
+            "Flare Icon",
+            "Font Icon",
+            "GameManager Icon",
+            "GameObject Icon",
+            "GridView",
+            "HorizontalSplit",
+            "Icon Dropdown",
+            "Image Icon",
+            "js Script Icon",
+            "LightingSettings Icon",
+            "LightmapParameters Icon",
+            "ListView",
+            "MeshRenderer Icon",
+            "Mirror",
+            "MonoLogo",
+            "MoveTool",
+            "PauseButton",
+            "PlayButton",
+            "Prefab Icon",
+            "PrefabModel Icon",
+            "PrefabVariant Icon",
+            "PreMatCube",
+            "PreMatCylinder",
+            "PreMatLight0",
+            "PreMatLight1",
+            "PreMatSphere",
+            "PreMatTorus",
+            "Preset.Context",
+            "PreTextureAlpha",
+            "PreTextureMipMapHigh",
+            "PreTextureMipMapLow",
+            "PreTextureRGB",
+            "RotateTool",
+            "ScaleTool",
+            "SceneList Icon",
+            "ScriptableObject Icon",
+            "Settings Icon",
+            "Shaded",
+            "Shader Icon",
+            "Shortcut Icon",
+            "SpriteAtlas Icon",
+            "StepButton",
+            "Terrain Icon",
+            "Text Icon",
+            "TextAsset Icon",
+            "Toolbar Minus",
+            "Toolbar Plus",
+            "Toolbar Plus More",
+            "ToolSettings",
+            "UnityLogo",
+            "VerticalSplit",
+            "VideoClip Icon",
+            "VisualEffectAsset Icon",
+            "WelcomeScreen.AssetStoreLogo",
+            "_Help",
+            "_menu",
+            "_Popup"
+        };
+        #endregion
+    }
+}
