@@ -14,11 +14,11 @@ namespace GameDashboard.Editor
     internal class GameDashboardShortcutButton : UnityEditor.Editor
     {
 #if UNITY_6000_3_OR_NEWER
-        [MainToolbarElement("Game Dashboard", defaultDockPosition = MainToolbarDockPosition.Middle)]
+        [MainToolbarElement(GameDashboard.PACKAGE_NAME, defaultDockPosition = MainToolbarDockPosition.Middle)]
         public static MainToolbarElement ToolbarButton()
         {
             var icon = EditorGUIUtility.IconContent(GameDashboard.UNITY_ICON).image as Texture2D;
-            var content = new MainToolbarContent(icon, "Game Dashboard");
+            var content = new MainToolbarContent(icon, GameDashboard.PACKAGE_NAME);
             return new MainToolbarButton(content, () => { GameDashboardWindow.ShowWindow(); });
         }
 #elif TOOLBAREXTENDER_1_4_2
@@ -44,7 +44,7 @@ namespace GameDashboard.Editor
         {
             GUILayout.FlexibleSpace();
 
-            if (GUILayout.Button(new GUIContent(EditorGUIUtility.IconContent(GameDashboard.UNITY_ICON).image, "Game Dashboard"), ToolbarStyles.commandButtonStyle))
+            if (GUILayout.Button(new GUIContent(EditorGUIUtility.IconContent(GameDashboard.UNITY_ICON).image, GameDashboard.PACKAGE_NAME), ToolbarStyles.commandButtonStyle))
             {
                 GameDashboardWindow.ShowWindow();
             }

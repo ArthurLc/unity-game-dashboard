@@ -8,19 +8,28 @@ namespace GameDashboard.Editor
 {
     internal static class GameDashboardProvider
     {
+        private const string MENU_ITEM_NAME = GameDashboard.MENU_ITEM_PATH + "/Settings..." + MENU_ITEM_SHORTCUT;
+        private const string MENU_ITEM_SHORTCUT = "";
+
+        [MenuItem(MENU_ITEM_NAME, priority = 20)]
+        public static void ShowSettings()
+        {
+            SettingsService.OpenProjectSettings(GameDashboard.PROJECT_SETTINGS_PATH);
+        }
+
         [SettingsProvider]
         internal static SettingsProvider CustomSettingsProvider()
         {
-            var provider = new SettingsProvider("Project/Game Dashboard", SettingsScope.Project)
+            var provider = new SettingsProvider(GameDashboard.PROJECT_SETTINGS_PATH, SettingsScope.Project)
             {
-                label = "Game Dashboard",
+                label = GameDashboard.PACKAGE_NAME,
                 activateHandler = (searchContext, rootElement) =>
                 {
                     var settings = GameDashboardSettings.GetOrCreateSettings();
 
                     var title = new Label()
                     {
-                        text = "Game Dashboard",
+                        text = GameDashboard.PACKAGE_NAME,
                         style =
                         {
                             unityFontStyleAndWeight = FontStyle.Bold,

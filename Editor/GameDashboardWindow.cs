@@ -10,11 +10,14 @@ namespace GameDashboard.Editor
 {
     public class GameDashboardWindow : EditorWindow
     {
-        [MenuItem("Window/Game Dashboard/Game Dashboard %g")]
+        private const string MENU_ITEM_NAME = GameDashboard.MENU_ITEM_PATH + "/" + GameDashboard.PACKAGE_NAME + MENU_ITEM_SHORTCUT;
+        private const string MENU_ITEM_SHORTCUT = " %g";
+
+        [MenuItem(MENU_ITEM_NAME, priority = 40)]
         public static void ShowWindow()
         {
             var win = GetWindow<GameDashboardWindow>();
-            win.titleContent = new GUIContent("Game Dashboard", EditorGUIUtility.IconContent(GameDashboard.UNITY_ICON).image);
+            win.titleContent = new GUIContent(GameDashboard.PACKAGE_NAME, EditorGUIUtility.IconContent(GameDashboard.UNITY_ICON).image);
             win.minSize = new Vector2(750, 325);
         }
 

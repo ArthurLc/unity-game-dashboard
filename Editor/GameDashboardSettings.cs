@@ -8,7 +8,7 @@ using Object = UnityEngine.Object;
 
 namespace GameDashboard.Editor
 {
-    [FilePath("ProjectSettings/Packages/com.ArthurLc.unity-game-dashboard/GameDashboardSettings.asset", FilePathAttribute.Location.ProjectFolder)]
+    [FilePath("ProjectSettings/Packages/com.arthurlc.unity-game-dashboard/GameDashboardSettings.asset", FilePathAttribute.Location.ProjectFolder)]
     internal class GameDashboardSettings : ScriptableSingleton<GameDashboardSettings>
     {
         [Serializable]
